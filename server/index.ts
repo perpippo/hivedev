@@ -9,6 +9,7 @@ import { projectAdrGraph, projectArchitectureGraph } from "./graph.js";
 import { validateRepoRoot } from "./project.js";
 import { subscribeRun } from "./runHub.js";
 import type { RunRequestBody } from "./runHub.js";
+import { isProviderKey, listProviders } from "./providers.js";
 import { loadRunnersForRepo } from "./runners.js";
 import { buildMacroFromAdrDir, composeSpineFile } from "./spine.js";
 import { readState, writeState } from "./state.js";
@@ -45,6 +46,8 @@ app.get("/api/repo/validate", (c) => {
   const v = validateRepoRoot(root);
   return c.json(v);
 });
+
+app.get("/api/providers", (c) => c.json({ providers: listProviders() }));
 
 app.get("/api/runners", (c) => {
   const repo = c.req.query("repo") ?? "";
@@ -95,8 +98,12 @@ app.post("/api/run", async (c) => {
   if (!v.ok) {
     return c.json({ error: v.errors[0] ?? "Repo non valido", validation: v }, 400);
   }
-  if (!body.stepRunnerIds?.length) {
-    return c.json({ error: "stepRunnerIds richiesto" }, 400);
+  if (body.mode === "quick") {
+    if (!isProviderKey(body.providerKey)) {
+      return c.json({ error: "providerKey non valido (usa /api/providers)" }, 400);
+    }
+  } else if (!body.stepRunnerIds?.length) {
+    return c.json({ error: "stepRunnerIds richiesto in modalità chain" }, 400);
   }
   const runId = randomUUID();
   void executeRunAsync(runId, body);

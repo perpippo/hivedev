@@ -6,8 +6,9 @@ import type { AuditRunRecord } from "./audit.js";
 import { logAudit } from "./audit.js";
 import { publishRun } from "./runHub.js";
 import type { RunRequestBody } from "./runHub.js";
-import { loadRunnersForRepo, type RunnerProfile } from "./runners.js";
+import { isProviderKey, providerToRunner } from "./providers.js";
 import { tryGetGitHead } from "./project.js";
+import { loadRunnersForRepo, type RunnerProfile } from "./runners.js";
 
 function pickRunners(ids: string[], catalog: RunnerProfile[]): RunnerProfile[] {
   const map = new Map(catalog.map((r) => [r.id, r]));
@@ -26,9 +27,8 @@ function writeSpineTemp(spine: string): string {
 }
 
 export async function executeRunAsync(runId: string, body: RunRequestBody): Promise<void> {
-  const { repoRoot, task, stepRunnerIds, spineContent } = body;
+  const { repoRoot, task, spineContent } = body;
   const startedAt = new Date().toISOString();
-  const catalog = loadRunnersForRepo(repoRoot);
   const stepsMeta: AuditRunRecord["steps"] = [];
   let ok = true;
   let error: string | undefined;
@@ -36,7 +36,14 @@ export async function executeRunAsync(runId: string, body: RunRequestBody): Prom
   const spinePath = writeSpineTemp(spineContent);
 
   try {
-    const steps = pickRunners(stepRunnerIds, catalog);
+    const steps: RunnerProfile[] =
+      body.mode === "quick"
+        ? isProviderKey(body.providerKey)
+          ? [providerToRunner(body.providerKey)]
+          : (() => {
+              throw new Error(`Provider non valido: ${body.providerKey}`);
+            })()
+        : pickRunners(body.stepRunnerIds, loadRunnersForRepo(repoRoot));
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i]!;
       publishRun(runId, {

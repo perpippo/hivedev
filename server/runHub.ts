@@ -45,10 +45,18 @@ export function publishRun(runId: string, ev: RunEvent) {
   if (buf.length > MAX_BUFFER) buf.splice(0, buf.length - MAX_BUFFER);
 }
 
-export type RunRequestBody = {
-  repoRoot: string;
-  task: string;
-  /** Selettori `id` tra i runner del catalogo, in ordine */
-  stepRunnerIds: string[];
-  spineContent: string;
-};
+export type RunRequestBody =
+  | {
+      mode: "quick";
+      repoRoot: string;
+      task: string;
+      spineContent: string;
+      providerKey: string;
+    }
+  | {
+      mode: "chain";
+      repoRoot: string;
+      task: string;
+      spineContent: string;
+      stepRunnerIds: string[];
+    };

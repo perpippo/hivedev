@@ -18,6 +18,13 @@ type RunnerProfile = {
   timeoutMs: number;
 };
 
+type ProviderInfo = {
+  key: string;
+  label: string;
+  hint: string;
+  timeoutMs: number;
+};
+
 type AuditRun = {
   runId: string;
   repoRoot: string;
@@ -35,6 +42,9 @@ export default function App() {
   const [validation, setValidation] = useState<RepoValidation | null>(null);
   const [runners, setRunners] = useState<RunnerProfile[]>([]);
   const [inChain, setInChain] = useState<Record<string, boolean>>({});
+  const [providers, setProviders] = useState<ProviderInfo[]>([]);
+  const [providerKey, setProviderKey] = useState("claude-code");
+  const [useCustomChain, setUseCustomChain] = useState(false);
   const [spinePreview, setSpinePreview] = useState<{ macro: string; full: string } | null>(null);
   const [log, setLog] = useState("");
   const [running, setRunning] = useState(false);
@@ -46,6 +56,14 @@ export default function App() {
       const r = await fetch("/api/state");
       const j = (await r.json()) as { lastRepoRoot: string | null };
       if (j.lastRepoRoot) setRepo(j.lastRepoRoot);
+    })();
+  }, []);
+
+  useEffect(() => {
+    void (async () => {
+      const r = await fetch("/api/providers");
+      const j = (await r.json()) as { providers: ProviderInfo[] };
+      setProviders(j.providers);
     })();
   }, []);
 
@@ -124,7 +142,8 @@ export default function App() {
   }, [tab, loadAudit]);
 
   const runChain = useCallback(async () => {
-    if (!repo.trim() || stepRunnerIds.length === 0) return;
+    if (!repo.trim()) return;
+    if (useCustomChain && stepRunnerIds.length === 0) return;
     esRef.current?.close();
     setRunning(true);
     setLog("");
@@ -133,15 +152,25 @@ export default function App() {
       `/api/spine/preview?repo=${encodeURIComponent(repo)}&task=${encodeURIComponent(task)}`,
     );
     const sj = (await spRes.json()) as { full: string };
+    const payload = useCustomChain
+      ? {
+          mode: "chain" as const,
+          repoRoot: repo,
+          task,
+          spineContent: sj.full,
+          stepRunnerIds,
+        }
+      : {
+          mode: "quick" as const,
+          repoRoot: repo,
+          task,
+          spineContent: sj.full,
+          providerKey,
+        };
     const res = await fetch("/api/run", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        repoRoot: repo,
-        task,
-        stepRunnerIds,
-        spineContent: sj.full,
-      }),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) {
       const err = (await res.json()) as { error?: string };
@@ -172,7 +201,7 @@ export default function App() {
       esRef.current = null;
       setRunning(false);
     };
-  }, [repo, task, stepRunnerIds, refreshSpine, loadAudit]);
+  }, [repo, task, stepRunnerIds, refreshSpine, loadAudit, useCustomChain, providerKey]);
 
   return (
     <ReactFlowProvider>
@@ -180,7 +209,7 @@ export default function App() {
         <header style={{ marginBottom: "1rem" }}>
           <h1>HiveDev</h1>
           <p className="muted" style={{ margin: 0 }}>
-            Fase 1–2 (ADR-0006 / 0007): repo deputato, catena runner, stream, audit, anteprima spine; grafi ADR e manifest moduli.
+            Repo deputato, CLI predefinite (Claude / Codex / Gemini / Cursor) o catena da file, stream, audit, spine; grafi ADR.
           </p>
         </header>
 
@@ -255,36 +284,85 @@ export default function App() {
             </section>
 
             <section>
-              <h2>Catena runner</h2>
+              <h2>Strumento CLI</h2>
               <p className="muted">
-                Ordine = ordine nel catalogo (filtrato dai checkbox). Override con <code>hivedev.config.json</code> nel repo.
+                Un solo passo: il prompt inviato allo strumento è il <strong>file spine</strong> (macro ADR + task), via
+                sostituzione shell su <code>$HIVEDEV_SPINE_FILE</code>.
               </p>
-              {runners.length === 0 ? (
-                <p className="muted">Nessun runner — verifica il path del repository.</p>
-              ) : (
-                <div className="runner-list">
-                  {runners.map((r) => (
-                    <label key={r.id}>
-                      <input
-                        type="checkbox"
-                        checked={!!inChain[r.id]}
-                        onChange={() =>
-                          setInChain((prev) => ({
-                            ...prev,
-                            [r.id]: !prev[r.id],
-                          }))
-                        }
-                      />
-                      <span>
-                        <strong>{r.id}</strong> ({r.role}) — <code>{r.command}</code>
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
-              <p className="muted">Passi attivi: {stepRunnerIds.join(" → ") || "(nessuno)"}</p>
-              <button type="button" disabled={running || !repo.trim() || stepRunnerIds.length === 0} onClick={() => void runChain()}>
-                {running ? "Run in corso…" : "Avvia catena"}
+              <label htmlFor="provider">Scegli CLI</label>
+              <select
+                id="provider"
+                value={providerKey}
+                disabled={useCustomChain}
+                onChange={(e) => setProviderKey(e.target.value)}
+                style={{ width: "100%", maxWidth: 420, padding: "0.5rem", font: "inherit", borderRadius: 6 }}
+              >
+                {providers.map((p) => (
+                  <option key={p.key} value={p.key}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+              {providers.find((p) => p.key === providerKey) ? (
+                <p className="muted" style={{ marginTop: "0.35rem" }}>
+                  {providers.find((p) => p.key === providerKey)!.hint}
+                </p>
+              ) : null}
+
+              <label style={{ marginTop: "0.75rem", display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={useCustomChain}
+                  onChange={(e) => setUseCustomChain(e.target.checked)}
+                />
+                <span>
+                  Usa invece la <strong>catena</strong> da <code>hivedev.config.json</code> (avanzato)
+                </span>
+              </label>
+
+              {useCustomChain ? (
+                <>
+                  <p className="muted" style={{ marginTop: "0.5rem" }}>
+                    Ordine = ordine nel file, filtrato dai checkbox.
+                  </p>
+                  {runners.length === 0 ? (
+                    <p className="muted">Nessun runner — verifica il path del repository.</p>
+                  ) : (
+                    <div className="runner-list">
+                      {runners.map((r) => (
+                        <label key={r.id}>
+                          <input
+                            type="checkbox"
+                            checked={!!inChain[r.id]}
+                            onChange={() =>
+                              setInChain((prev) => ({
+                                ...prev,
+                                [r.id]: !prev[r.id],
+                              }))
+                            }
+                          />
+                          <span>
+                            <strong>{r.id}</strong> ({r.role}) — <code>{r.command}</code>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  <p className="muted">Passi attivi: {stepRunnerIds.join(" → ") || "(nessuno)"}</p>
+                </>
+              ) : null}
+
+              <button
+                type="button"
+                disabled={
+                  running ||
+                  !repo.trim() ||
+                  (useCustomChain && stepRunnerIds.length === 0)
+                }
+                onClick={() => void runChain()}
+                style={{ marginTop: "0.65rem" }}
+              >
+                {running ? "Run in corso…" : useCustomChain ? "Avvia catena" : "Avvia con CLI selezionata"}
               </button>
               <h3 style={{ fontSize: "0.95rem", marginTop: "0.75rem" }}>Stream eventi</h3>
               <pre className="log">{log || "(nessun output)"}</pre>

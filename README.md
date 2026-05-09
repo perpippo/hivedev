@@ -21,9 +21,13 @@ Il client Vite attende che l’API risponda su `/api/health` (evita errori proxy
 
 Imposta in UI il **path assoluto** del repository da orchestrare (può essere questo stesso repo per prova). Stato e audit persistono in `~/.hivedev/` (vedi ADR-0007).
 
+### CLI dalla UI (modalità rapida)
+
+Nel tab **Progetto e run** puoi scegliere tra **Claude Code**, **Codex**, **Gemini CLI** e **Cursor (`agent`)**: viene eseguito **un solo comando** nel repo con prompt = contenuto del file spine (macro ADR + task). Le CLI devono essere nel **PATH** e configurate (API key / login) come da documentazione del fornitore.
+
 ### Configurazione opzionale nel repo orchestrato
 
-- `hivedev.config.json` — array `runners` (`id`, `command`, `role`, `timeoutMs`). Variabili d’ambiente per ogni passo: `HIVEDEV_SPINE_FILE`, `HIVEDEV_TASK`, `HIVEDEV_RUN_ID`, `HIVEDEV_STEP_INDEX`.
+- `hivedev.config.json` — array `runners` (`id`, `command`, `role`, `timeoutMs`), usato se attivi **«Usa catena da hivedev.config.json»** nell’UI. Variabili d’ambiente per ogni passo: `HIVEDEV_SPINE_FILE`, `HIVEDEV_TASK`, `HIVEDEV_RUN_ID`, `HIVEDEV_STEP_INDEX`.
 - `hivedev.architecture.json` — grafo moduli per la vista architettura (`modules[].id`, `label`, `dependsOn`).
 
 ```bash
