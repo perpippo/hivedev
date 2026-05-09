@@ -14,6 +14,8 @@ npm install
 npm run dev
 ```
 
+Il client Vite attende che l’API risponda su `/api/health` (evita errori proxy `ECONNREFUSED` all’avvio).
+
 - UI: [http://127.0.0.1:5173](http://127.0.0.1:5173) (proxy verso API)
 - API: `http://127.0.0.1:8787` (override con `HIVEDEV_API_PORT`)
 
