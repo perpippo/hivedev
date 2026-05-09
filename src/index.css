@@ -1,0 +1,127 @@
+:root {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+  line-height: 1.45;
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+h1 {
+  font-size: 1.35rem;
+  margin: 0 0 0.75rem;
+}
+
+h2 {
+  font-size: 1.05rem;
+  margin: 0 0 0.5rem;
+}
+
+section {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+input[type="text"],
+textarea {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font: inherit;
+}
+
+textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+button {
+  font: inherit;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid #64748b;
+  background: #0f172a;
+  color: #f8fafc;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  background: #fff;
+  color: #0f172a;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.tabs button {
+  border: 1px solid #cbd5e1;
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.tabs button.active {
+  background: #0f172a;
+  color: #f8fafc;
+  border-color: #0f172a;
+}
+
+.muted {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.log {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 0.65rem;
+  border-radius: 6px;
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+.runner-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.runner-list label {
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.warn {
+  color: #b45309;
+  font-size: 0.85rem;
+}

@@ -1,0 +1,7 @@
+{
+  "modules": [
+    { "id": "api", "label": "Server API (Hono)", "dependsOn": [] },
+    { "id": "ui", "label": "Client Vite + React", "dependsOn": ["api"] },
+    { "id": "docs", "label": "ADR e documentazione", "dependsOn": [] }
+  ]
+}

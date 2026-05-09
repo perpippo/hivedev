@@ -18,6 +18,7 @@ Questo repository è il progetto **HiveDev**: orchestratore di sviluppo ancorato
 - **Scope**: modifiche mirate al task; niente refactor non richiesti.
 - **ADR**: nuovi file `docs/adr/NNNN-titolo-kebab.md`; aggiornare la tabella in `docs/adr/README.md`.
 - **Runner / integrazioni**: allinearsi a **ADR-0002** (contratto, cwd repo, audit); composizione prompt a **ADR-0003** (spine); grafi e UI a **ADR-0005**.
+- **UI applicativa**: fasi e fuori-scope in **ADR-0006**; stack (Vite + React + Hono + SSE) in **ADR-0007**.
 
 ## Lingua
 
